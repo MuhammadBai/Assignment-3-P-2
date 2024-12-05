@@ -27,11 +27,9 @@ I created a **load balancer** in DigitalOcean that:
 * Both servers share the workload for better performance.
 
 ### 3. Cloning the Starter Code
-1. Cloned the updated starter repository to both droplets using git clone.
-This code generates:
-    * index.html for the root web page.
-    * A /documents directory containing:
-        * file-one and file-two, each with some sample text.
+1. Cloned the updated starter repository from `https://git.sr.ht/~nathan_climbs/2420-as3-p2-start` to both droplets using git clone.
+    which has
+    * `generate_index` to generate `index.html` file inside `HTML` and a `/documents` directory which contains `file-one` and `file-two` where we write our text.
 
 ### 5. Configured Nginx
 * I created two directories to manage server configurations:
@@ -45,7 +43,31 @@ sudo mkdir /etc/nginx/sites-enabled
 * Serves files at /documents using the documents folder.
 * Lists files automatically when visiting /documents.
 
-* Linked files symbolically to Nginx’s enabled sites directory  `/etc/nginx/sites-enabled`:
+## `drop1server_block.conf` look like the following: 
+```
+server {
+    listen 80;                     # this will Listen on IPv4 port 80
+    listen [::]:80;                # this will listen on IPv6 port 80
+
+    server_name _;                 # replace with your server's public IP or wildcard which is represented by underscore
+
+    root /var/lib/webgen/HTML;     # it is the document root for the main website
+    index index.html;              # this is the default file to serve when accessing the root
+
+    # Location block for root URL
+    location / {
+        try_files $uri $uri/ =404; # this attempts to serve the file or directory; return 404 if not found
+    }
+
+    # Location block for /documents
+    location /documents {
+        alias /var/lib/webgen/documents/; # Serve files from this directory
+        autoindex on;                     # Enable directory listing for /documents
+    }
+}
+```
+
+## Linked files symbolically to Nginx’s enabled sites directory  `/etc/nginx/sites-enabled`:
 `sudo ln -s /etc/nginx/sites-available/drop1server_block.conf /etc/nginx/sites-enabled/drop1server_block.conf`
 
 **Update Nginx Configurations to:**
