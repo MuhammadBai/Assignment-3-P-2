@@ -6,8 +6,8 @@ In this project, I worked on setting up two web servers with Arch Linux and conf
 
 This README explains the steps how everything works together.
 
-## What I Did
-
+## Steps
+___
 ### 1. Created Two Web Servers
 * I created two Arch Linux droplets (servers) on DigitalOcean and tagged them as web.
 * I configureed my SSH config file so I can easily  connect by typing ssh drop1 or ssh drop2 instead of long IP addresses.
@@ -26,17 +26,12 @@ I created a **load balancer** in DigitalOcean that:
 * If one server goes down, the traffic is automatically redirected to the other.
 * Both servers share the workload for better performance.
 
-### 4. Cloned the Starter Code
-* Cloned my instructor's repository to both servers.i.e `(https://git.sr.ht/~nathan_climbs/2420-as3-p2-start)`
-* Updated the directory structure for the webgen system user to include a /documents directory:
-```
-/var/lib/webgen/
-├── bin/             # Contains the 'generate_index' script for creating index.html
-├── documents/       # Contains file-one, file-two
-│   ├── file-one     # Sample file with some text
-│   └── file-two     # Another sample file with text
-└── HTML/            # Contains the generated 'index.html'
-```
+### 3. Cloning the Starter Code
+1. Cloned the updated starter repository to both droplets using git clone.
+This code generates:
+    * index.html for the root web page.
+    * A /documents directory containing:
+        * file-one and file-two, each with some sample text.
 
 ### 5. Configured Nginx
 * I created two directories to manage server configurations:
@@ -44,30 +39,51 @@ I created a **load balancer** in DigitalOcean that:
 sudo mkdir /etc/nginx/sites-available
 sudo mkdir /etc/nginx/sites-enabled
 ```
-* Wrote a new server configuration `drop1server_block.conf` in `/etc/nginx/sites-available`. This configuration does the following:
+* Added a server block to `drop1server_block.conf` in `/etc/nginx/sites-available`. This configuration does the following:
 
 * Serves the main website at / using the index.html file in /var/lib/webgen/HTML/.
 * Serves files at /documents using the documents folder.
 * Lists files automatically when visiting /documents.
 
-* Linked the configuration file to Nginx’s enabled sites directory:
+* Linked files symbolically to Nginx’s enabled sites directory  `/etc/nginx/sites-enabled`:
 `sudo ln -s /etc/nginx/sites-available/drop1server_block.conf /etc/nginx/sites-enabled/drop1server_block.conf`
 
-* Tested the Nginx configuration and reloaded it:
+**Update Nginx Configurations to:**
+* Serve /documents for file download via the file server.
+* Include the symbolic links:
+    `include /etc/nginx/sites-enabled/*;`
+
+
+## File Structure
+The updated file structure on both servers under /var/lib/webgen/:
 ```
-sudo nginx -t
+/var/lib/webgen/
+├── bin/
+│   └── generate_index
+├── documents/
+│   ├── file-one
+│   └── file-two
+└── HTML/
+    └── index.html
+```
+
+### troubleshooting steps to make sure configuration works:
+
+```
+sudo systemctl restart Nginx
+sudo nginx -t # to test
 sudo systemctl reload nginx
 ```
 ### 6. Tested Everything
 * Accessed the load balancer’s public IP to verify that it properly distributes traffic between the two servers.
 Checked the file server by visiting http://64.23.176.133/documents to confirm that file-one and file-two were listed and downloadable.
 
-### Why I Did It This Way
+### Reasons:
 * **Load Balancer:** It is reliable to add load balancer because if in case one server fail other server will take the lead and provides scalability where more servers can be added easily.
 * **Nginx:** This configuration make it easier to manage multiple websites or features like the file server.
 * **System User:** We create system user as webgen which keep things secure by limiting access to only what is necessary.
 
 ### How You Can Test It
-* Visit the load balancer’s public IP in a browser.
-* Go to drop_2_ip/documents to view and download the sample files.
+* Go the load balancer’s public IP in a browser.
+* Go to `drop_2_ip/documents` to view and download the sample files.
 
